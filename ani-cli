@@ -241,7 +241,12 @@ download() {
             fi
             ;;
         *)
-            aria2c --enable-rpc=false --check-certificate=false --continue --summary-interval=0 -x 16 -s 16 "$1" --dir="$download_dir" -o "$2.mp4" --download-result=hide
+            if command -v "aria2c" >/dev/null; then
+                aria2c --enable-rpc=false --check-certificate=false --continue --summary-interval=0 -x 16 -s 16 "$1" --dir="$download_dir" -o "$2.mp4" --download-result=hide
+            else
+                printf "\033[0;33mWarning: aria2c not found, falling back to curl\033[0m\n" 1>&2
+                curl -s --create-dirs "$1" -o "$download_dir/$2.mp4"
+            fi
             ;;
     esac
 }
@@ -409,7 +414,7 @@ dep_ch "curl" "sed" "grep" || true
 if [ -z "$ANI_CLI_NON_INTERACTIVE" ]; then dep_ch fzf || true; fi
 case "$player_function" in
     debug) ;;
-    download) dep_ch "ffmpeg" "aria2c" ;;
+    download) dep_ch "ffmpeg" ;;
     flatpak*)
         dep_ch "flatpak"
         flatpak info io.mpv.Mpv >/dev/null 2>&1 || die "Program \"mpv (flatpak)\" not found. Please install it."
